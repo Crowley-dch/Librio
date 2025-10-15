@@ -1,0 +1,37 @@
+{% extends 'books/base.html' %}
+
+{% block title %}Выдать книгу - Librio{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6">
+        <h2>Выдать книгу</h2>
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">{{ book.title }}</h5>
+                <p class="card-text">
+                    <strong>Автор:</strong> {{ book.author.full_name }}<br>
+                    <strong>Жанр:</strong> {{ book.genre.name }}
+                </p>
+                
+                {% if book.is_available %}
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="borrower_name" class="form-label">Имя читателя:</label>
+                        <input type="text" class="form-control" id="borrower_name" name="borrower_name" required>
+                    </div>
+                    <button type="submit" class="btn btn-success">Выдать книгу</button>
+                </form>
+                {% else %}
+                <div class="alert alert-warning">
+                    Книга уже выдана
+                </div>
+                {% endif %}
+                
+                <a href="{% url 'book_list' %}" class="btn btn-secondary mt-3">Назад к каталогу</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

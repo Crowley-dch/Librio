@@ -1,0 +1,13 @@
+{% extends 'books/base.html' %}
+
+{% block title %}Главная - Librio{% endblock %}
+
+{% block content %}
+<div class="jumbotron">
+    <h1 class="display-4">Добро пожаловать в Librio!</h1>
+    <p class="lead">Электронная библиотека с тысячами книг</p>
+    <hr class="my-4">
+    <p>Найдите свою следующую книгу для чтения.</p>
+    <a class="btn btn-primary btn-lg" href="{% url 'book_list' %}" role="button">Перейти к каталогу</a>
+</div>
+{% endblock %}

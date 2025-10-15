@@ -1,0 +1,39 @@
+{% extends 'books/base.html' %}
+
+{% block title %}Каталог книг - Librio{% endblock %}
+
+{% block content %}
+<h1>Каталог книг</h1>
+
+<div class="row">
+    {% for book in books %}
+    <div class="col-md-6 mb-3">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">{{ book.title }}</h5>
+                <p class="card-text">
+                    <strong>Автор:</strong> {{ book.author.full_name }}<br>
+                    <strong>Жанр:</strong> {{ book.genre.name }}<br>
+                    <strong>Статус:</strong> 
+                    {% if book.is_available %}
+                        <span class="text-success">Доступна</span>
+                    {% else %}
+                        <span class="text-danger">Выдана</span>
+                    {% endif %}
+                </p>
+
+                {% if book.is_available %}
+                <a href="{% url 'borrow_book' book.id %}" class="btn btn-primary btn-sm">Выдать</a>
+                {% else %}
+                <span class="btn btn-secondary btn-sm disabled">Недоступна</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <p>Книги не найдены.</p>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

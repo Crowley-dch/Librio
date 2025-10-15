@@ -1,0 +1,38 @@
+{% extends 'books/base.html' %}
+
+{% block title %}Вернуть книгу - Librio{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6">
+        <h2>Вернуть книгу</h2>
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">{{ loan.book.title }}</h5>
+                <p class="card-text">
+                    <strong>Автор:</strong> {{ loan.book.author.full_name }}<br>
+                    <strong>Читатель:</strong> {{ loan.borrower_name }}<br>
+                    <strong>Дата выдачи:</strong> {{ loan.loan_date }}<br>
+                    {% if loan.return_date %}
+                    <strong>Дата возврата:</strong> {{ loan.return_date }}
+                    {% endif %}
+                </p>
+                
+                {% if not loan.return_date %}
+                <form method="post">
+                    {% csrf_token %}
+                    <p>Подтвердите возврат книги:</p>
+                    <button type="submit" class="btn btn-warning">Вернуть книгу</button>
+                </form>
+                {% else %}
+                <div class="alert alert-success">
+                    Книга уже возвращена
+                </div>
+                {% endif %}
+                
+                <a href="{% url 'book_list' %}" class="btn btn-secondary mt-3">Назад к каталогу</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
