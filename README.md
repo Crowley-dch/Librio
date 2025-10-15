@@ -40,6 +40,7 @@ python manage.py migrate
 ```bash
 python manage.py runserver
 ```
-##Доступ
-Веб-сайт: http://127.0.0.1:8000
-Админ-панель: http://127.0.0.1:8000/admin
+## Доступ
+
+-Веб-сайт: http://127.0.0.1:8000
+-Админ-панель: http://127.0.0.1:8000/admin
