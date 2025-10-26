@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
+from datetime import timedelta
 
 
 class Author(models.Model):
@@ -86,15 +88,25 @@ class Loan(models.Model):
         return f"{self.book.title} - {self.borrower_name}"
 
     def save(self, *args, **kwargs):
-        if not self.expiry_date:
-            from django.utils import timezone
-            from datetime import timedelta
+        if not self.pk and not self.expiry_date:  # только при создании
             self.expiry_date = timezone.now() + timedelta(days=self.book.max_loan_days)
 
-        if self.status == 'active' and timezone.now() > self.expiry_date:
+        if self.expiry_date and timezone.now() > self.expiry_date:
             self.status = 'expired'
+            if self.book.is_available == False:
+                self.book.is_available = True
+                self.book.save()
 
         super().save(*args, **kwargs)
+
+    def days_remaining(self):
+        if self.status != 'active' or not self.expiry_date:
+            return 0
+        remaining = self.expiry_date - timezone.now()
+        return max(0, remaining.days)
+
+    def is_overdue(self):
+        return self.status == 'active' and self.expiry_date and timezone.now() > self.expiry_date
 
     def is_access_active(self):
         from django.utils import timezone
