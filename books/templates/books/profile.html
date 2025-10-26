@@ -1,0 +1,112 @@
+{% extends 'books/base.html' %}
+
+{% block title %}Мой профиль - Librio{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <!-- Информация о пользователе -->
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">👤 Мой профиль</h4>
+                <p><strong>Имя пользователя:</strong> {{ user.username }}</p>
+                <p><strong>Email:</strong> {{ user.email|default:"Не указан" }}</p>
+                <p><strong>Тип пользователя:</strong> 
+                    <span class="badge bg-primary">{{ user_profile.get_user_type_display }}</span>
+                </p>
+                <p><strong>Уровень доступа:</strong> 
+                    <span class="badge bg-info">{{ user_profile.get_access_description }}</span>
+                </p>
+                {% if user_profile.phone %}
+                <p><strong>Телефон:</strong> {{ user_profile.phone }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <!-- Активные выдачи -->
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">📚 Мои текущие книги</h4>
+                
+                {% if user_loans %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Книга</th>
+                                <th>Дата выдачи</th>
+                                <th>Срок возврата</th>
+                                <th>Статус</th>
+                                <th>Дней осталось</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for loan in user_loans %}
+                            <tr>
+                                <td>
+                                    <strong>{{ loan.book.title }}</strong><br>
+                                    <small class="text-muted">{{ loan.book.author.full_name }}</small>
+                                </td>
+                                <td>{{ loan.loan_date|date:"d.m.Y" }}</td>
+                                <td>{{ loan.expiry_date|date:"d.m.Y" }}</td>
+                                <td>
+                                    {% if loan.status == 'active' %}
+                                        <span class="badge bg-success">Активна</span>
+                                    {% elif loan.status == 'expired' %}
+                                        <span class="badge bg-danger">Просрочена</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ loan.get_status_display }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if loan.status == 'active' %}
+                                        {% if loan.days_remaining > 0 %}
+                                            <span class="text-success">{{ loan.days_remaining }} дн.</span>
+                                        {% else %}
+                                            <span class="text-danger">Просрочена</span>
+                                        {% endif %}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <p class="text-muted">У вас пока нет выданных книг</p>
+                    <a href="{% url 'book_list' %}" class="btn btn-primary">Перейти к каталогу</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Статистика -->
+        <div class="card mt-4">
+            <div class="card-body">
+                <h5 class="card-title">📊 Статистика</h5>
+                <div class="row text-center">
+                    <div class="col-md-4">
+                        <h3>{{ user_loans.count }}</h3>
+                        <p class="text-muted">Всего выдач</p>
+                    </div>
+                    <div class="col-md-4">
+                        <h3>{{ user_loans|length }}</h3>
+                        <p class="text-muted">Активных сейчас</p>
+                    </div>
+                    <div class="col-md-4">
+                        <h3>
+                            {% widthratio user_loans.count user_loans.count 100 %}%
+                        </h3>
+                        <p class="text-muted">Процент возврата</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
