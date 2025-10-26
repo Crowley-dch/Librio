@@ -121,6 +121,14 @@ class UserProfile(models.Model):
         ('premium', 'Премиум пользователь'),
     ]
 
+    def get_access_description(self):
+        descriptions = {
+            'guest': 'Гость - только свободные книги',
+            'student': 'Студент - базовый доступ',
+            'teacher': 'Преподаватель - расширенный доступ',
+            'premium': 'Премиум - полный доступ'
+        }
+        return descriptions.get(self.user_type, 'Неизвестный уровень доступа')
     user = models.OneToOneField(User, on_delete=models.CASCADE, verbose_name="Пользователь")
     user_type = models.CharField(
         max_length=20,
