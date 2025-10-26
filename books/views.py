@@ -2,6 +2,8 @@ from django.shortcuts import render, get_object_or_404, redirect
 from .models import Book, Loan
 from django.utils import timezone
 from datetime import timedelta
+from django.contrib import messages
+from .models import UserProfile
 
 def book_list(request):
     books = Book.objects.all()
@@ -16,16 +18,30 @@ def borrow_book(request, book_id):
 
     if request.method == 'POST':
         borrower_name = request.POST.get('borrower_name')
+
         if borrower_name and book.is_available:
-            # Создаем запись о выдаче
+            user_profile, created = UserProfile.objects.get_or_create(
+                user=request.user,
+                defaults={'user_type': 'guest'}  # по умолчанию гость
+            )
+
+            if not user_profile.can_borrow_book(book):
+                messages.error(request,
+                               f'Доступ запрещен! Ваш уровень: {user_profile.get_access_description()}. '
+                               f'Книга требует: {book.get_access_level_display()}.'
+                               )
+                return redirect('book_list')
+
             Loan.objects.create(
                 book=book,
-                borrower_name=borrower_name,
-                return_date=timezone.now().date() + timedelta(days=14)
+                user=request.user,
+                borrower_name=borrower_name
             )
-            # Меняем статус книги
+
             book.is_available = False
             book.save()
+
+            messages.success(request, f'Книга "{book.title}" успешно выдана!')
             return redirect('book_list')
 
     return render(request, 'books/borrow_book.html', {'book': book})
