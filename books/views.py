@@ -1,14 +1,40 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from .models import Book, Loan
+from .models import Book, Loan, Genre
 from django.utils import timezone
 from datetime import timedelta
 from django.contrib import messages
 from .models import UserProfile
-
+from django.db import models
 def book_list(request):
     books = Book.objects.all()
-    return render(request, 'books/book_list.html', {'books': books})
+    genres = Genre.objects.all()
 
+    search_query = request.GET.get('search', '')
+    if search_query:
+        books = books.filter(
+            models.Q(title__icontains=search_query) |
+            models.Q(author__full_name__icontains=search_query) |
+            models.Q(genre__name__icontains=search_query)
+        )
+
+    genre_filter = request.GET.get('genre', '')
+    if genre_filter:
+        books = books.filter(genre__name=genre_filter)
+
+    availability_filter = request.GET.get('availability', '')
+    if availability_filter:
+        if availability_filter == 'available':
+            books = books.filter(is_available=True)
+        elif availability_filter == 'unavailable':
+            books = books.filter(is_available=False)
+
+    return render(request, 'books/book_list.html', {
+        'books': books,
+        'genres': genres,
+        'search_query': search_query,
+        'genre_filter': genre_filter,
+        'availability_filter': availability_filter,
+    })
 def home(request):
     return render(request, 'books/home.html')
 
