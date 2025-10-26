@@ -5,35 +5,140 @@
 {% block content %}
 <h1>Каталог книг</h1>
 
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <!-- Поиск -->
+            <div class="col-md-4">
+                <input type="text" name="search" class="form-control"
+                       placeholder="Поиск по названию, автору, жанру..."
+                       value="{{ search_query }}">
+            </div>
+
+            <div class="col-md-3">
+                <select name="genre" class="form-select">
+                    <option value="">Все жанры</option>
+                    {% for genre in genres %}
+                    <option value="{{ genre.name }}"
+                            {% if genre_filter == genre.name %}selected{% endif %}>
+                        {{ genre.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <select name="availability" class="form-select">
+                    <option value="">Все книги</option>
+                    <option value="available"
+                            {% if availability_filter =='available' %}selected{% endif %}>
+                        📚 Доступные
+                    </option>
+                    <option value="unavailable"
+                            {% if availability_filter =='unavailable' %}selected{% endif %}>
+                        ⏳ Выданные
+                    </option>
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">🔍 Найти</button>
+            </div>
+        </form>
+
+        {% if search_query or genre_filter or availability_filter %}
+        <div class="mt-3">
+            <a href="{% url 'book_list' %}" class="btn btn-outline-secondary btn-sm">
+                ❌ Сбросить фильтры
+            </a>
+            <small class="text-muted ms-2">
+                Найдено книг: {{ books.count }}
+            </small>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
 <div class="row">
     {% for book in books %}
-    <div class="col-md-6 mb-3">
-        <div class="card">
+    <div class="col-md-6 mb-4">
+        <div class="card h-100">
             <div class="card-body">
                 <h5 class="card-title">{{ book.title }}</h5>
                 <p class="card-text">
-                    <strong>Автор:</strong> {{ book.author.full_name }}<br>
-                    <strong>Жанр:</strong> {{ book.genre.name }}<br>
-                    <strong>Статус:</strong> 
+                    <strong>👤 Автор:</strong> {{ book.author.full_name }}<br>
+                    <strong>📖 Жанр:</strong> {{ book.genre.name }}<br>
+
+                    {% if book.access_level != 'free' %}
+                    <strong>🔒 Уровень доступа:</strong>
+                    <span class="badge
+                        {% if book.access_level == 'student' %}bg-warning
+                        {% elif book.access_level == 'premium' %}bg-info
+                        {% elif book.access_level == 'restricted' %}bg-danger
+                        {% else %}bg-secondary{% endif %}">
+                        {{ book.get_access_level_display }}
+                    </span><br>
+                    {% endif %}
+
+                    <strong>📊 Статус:</strong>
                     {% if book.is_available %}
-                        <span class="text-success">Доступна</span>
+                        <span class="text-success">✅ Доступна</span>
                     {% else %}
-                        <span class="text-danger">Выдана</span>
+                        <span class="text-danger">⏳ Выдана</span>
                     {% endif %}
                 </p>
+            </div>
 
+            <div class="card-footer">
                 {% if book.is_available %}
-                <a href="{% url 'borrow_book' book.id %}" class="btn btn-primary btn-sm">Выдать</a>
+                <a href="{% url 'borrow_book' book.id %}" class="btn btn-primary btn-sm">
+                    📥 Выдать книгу
+                </a>
                 {% else %}
-                <span class="btn btn-secondary btn-sm disabled">Недоступна</span>
+                <span class="btn btn-secondary btn-sm disabled">
+                    🔒 Недоступна
+                </span>
                 {% endif %}
+
+                <small class="text-muted ms-2">
+                    {% if book.max_loan_days %}
+                    Срок: {{ book.max_loan_days }} дн.
+                    {% endif %}
+                </small>
             </div>
         </div>
     </div>
     {% empty %}
     <div class="col-12">
-        <p>Книги не найдены.</p>
+        <div class="alert alert-info text-center">
+            <h4>📚 Книги не найдены</h4>
+            <p>
+                {% if search_query or genre_filter or availability_filter %}
+                Попробуйте изменить параметры поиска или
+                <a href="{% url 'book_list' %}">сбросить фильтры</a>
+                {% else %}
+                В библиотеке пока нет книг.
+                <a href="{% url 'admin:books_book_add' %}">Добавьте книги через админку</a>
+                {% endif %}
+            </p>
+        </div>
     </div>
     {% endfor %}
 </div>
+
+{% if books.count > 10 %}
+<nav aria-label="Page navigation" class="mt-4">
+    <ul class="pagination justify-content-center">
+        <li class="page-item disabled">
+            <a class="page-link" href="#">Предыдущая</a>
+        </li>
+        <li class="page-item active"><a class="page-link" href="#">1</a></li>
+        <li class="page-item"><a class="page-link" href="#">2</a></li>
+        <li class="page-item"><a class="page-link" href="#">3</a></li>
+        <li class="page-item">
+            <a class="page-link" href="#">Следующая</a>
+        </li>
+    </ul>
+</nav>
+{% endif %}
 {% endblock %}
