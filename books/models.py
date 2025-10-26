@@ -48,6 +48,15 @@ class Book(models.Model):
     )
     description = models.TextField(blank=True, verbose_name="Описание")
 
+    def get_access_description(self):
+        descriptions = {
+            'free': 'Свободный доступ',
+            'student': 'Для студентов',
+            'premium': 'Премиум доступ',
+            'restricted': 'Ограниченный доступ'
+        }
+        return descriptions.get(self.access_level, 'Неизвестный доступ')
+
     class Meta:
         verbose_name = "Книга"
         verbose_name_plural = "Книги"
@@ -118,7 +127,6 @@ class UserProfile(models.Model):
 
     @property
     def access_level(self):
-        # Автоматически определяем уровень доступа по типу пользователя
         access_map = {
             'guest': 'free',
             'student': 'student',
@@ -126,3 +134,25 @@ class UserProfile(models.Model):
             'premium': 'premium'
         }
         return access_map.get(self.user_type, 'free')
+
+    def can_borrow_book(self, book):
+        access_rules = {
+            'guest': ['free'],  # Гости - только свободные книги
+            'student': ['free', 'student'],  # Студенты + студенческие
+            'teacher': ['free', 'student', 'premium'],  # Преподаватели + премиум
+            'premium': ['free', 'student', 'premium', 'restricted']  # Полный доступ
+        }
+
+        user_access = self.access_level
+        book_access = book.access_level
+
+        return book_access in access_rules.get(user_access, [])
+
+    def get_access_description(self):
+        access_descriptions = {
+            'guest': 'Только книги со свободным доступом',
+            'student': 'Книги со свободным и студенческим доступом',
+            'teacher': 'Все книги кроме ограниченных',
+            'premium': 'Полный доступ ко всем книгам'
+        }
+        return access_descriptions.get(self.user_type, 'Неизвестный уровень доступа')
