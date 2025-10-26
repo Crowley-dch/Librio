@@ -5,10 +5,49 @@ from datetime import timedelta
 from django.contrib import messages
 from .models import UserProfile
 from django.db import models
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import login, authenticate
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth import logout
+
+def custom_logout(request):
+    logout(request)
+    return redirect('home')
+@login_required
+def profile(request):
+    try:
+        user_profile = UserProfile.objects.get(user=request.user)
+    except UserProfile.DoesNotExist:
+        user_profile = UserProfile.objects.create(user=request.user, user_type='student')
+
+    user_loans = Loan.objects.filter(user=request.user).order_by('-loan_date')
+
+    return render(request, 'books/profile.html', {
+        'user_loans': user_loans,
+        'user_profile': user_profile
+    })
+
+
+def register(request):
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+
+            UserProfile.objects.create(user=user, user_type='student')
+
+            login(request, user)
+            return redirect('profile')
+    else:
+        form = UserCreationForm()
+
+    return render(request, 'books/register.html', {'form': form})
+
 def book_list(request):
     books = Book.objects.all()
     genres = Genre.objects.all()
 
+    # Поиск по названию, автору или жанру
     search_query = request.GET.get('search', '')
     if search_query:
         books = books.filter(
@@ -17,23 +56,22 @@ def book_list(request):
             models.Q(genre__name__icontains=search_query)
         )
 
+    # Фильтрация по жанру
     genre_filter = request.GET.get('genre', '')
     if genre_filter:
         books = books.filter(genre__name=genre_filter)
 
-    availability_filter = request.GET.get('availability', '')
-    if availability_filter:
-        if availability_filter == 'available':
-            books = books.filter(is_available=True)
-        elif availability_filter == 'unavailable':
-            books = books.filter(is_available=False)
+    # Фильтрация по уровню доступа (НОВОЕ!)
+    access_level_filter = request.GET.get('access_level', '')
+    if access_level_filter:
+        books = books.filter(access_level=access_level_filter)
 
     return render(request, 'books/book_list.html', {
         'books': books,
         'genres': genres,
         'search_query': search_query,
         'genre_filter': genre_filter,
-        'availability_filter': availability_filter,
+        'access_level_filter': access_level_filter,  # НОВОЕ!
     })
 def home(request):
     return render(request, 'books/home.html')

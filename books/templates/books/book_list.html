@@ -5,6 +5,7 @@
 {% block content %}
 <h1>Каталог книг</h1>
 
+<!-- Поиск и фильтры -->
 <div class="card mb-4">
     <div class="card-body">
         <form method="get" class="row g-3">
@@ -15,41 +16,61 @@
                        value="{{ search_query }}">
             </div>
 
+            <!-- Фильтр по жанру -->
             <div class="col-md-3">
                 <select name="genre" class="form-select">
                     <option value="">Все жанры</option>
                     {% for genre in genres %}
-                    <option value="{{ genre.name }}"
-                            {% if genre_filter == genre.name %}selected{% endif %}>
-                        {{ genre.name }}
-                    </option>
+                        {% if genre_filter == genre.name %}
+                            <option value="{{ genre.name }}" selected>{{ genre.name }}</option>
+                        {% else %}
+                            <option value="{{ genre.name }}">{{ genre.name }}</option>
+                        {% endif %}
                     {% endfor %}
                 </select>
             </div>
 
-            <div class="col-md-3">
-                <select name="availability" class="form-select">
-                    <option value="">Все книги</option>
-                    <option value="available"
-                            {% if availability_filter =='available' %}selected{% endif %}>
-                        📚 Доступные
-                    </option>
-                    <option value="unavailable"
-                            {% if availability_filter =='unavailable' %}selected{% endif %}>
-                        ⏳ Выданные
-                    </option>
-                </select>
-            </div>
+            <!-- Фильтр по доступности -->
+           <div class="col-md-3">
+    <select name="access_level" class="form-select">
+        <option value="">Все уровни доступа</option>
+        {% if access_level_filter == "free" %}
+            <option value="free" selected>Свободный доступ</option>
+        {% else %}
+            <option value="free">Свободный доступ</option>
+        {% endif %}
 
+        {% if access_level_filter == "student" %}
+            <option value="student" selected>Для студентов</option>
+        {% else %}
+            <option value="student">Для студентов</option>
+        {% endif %}
+
+        {% if access_level_filter == "premium" %}
+            <option value="premium" selected>Премиум доступ</option>
+        {% else %}
+            <option value="premium">Премиум доступ</option>
+        {% endif %}
+
+        {% if access_level_filter == "restricted" %}
+            <option value="restricted" selected>Ограниченный доступ</option>
+        {% else %}
+            <option value="restricted">Ограниченный доступ</option>
+        {% endif %}
+    </select>
+</div>
+
+            <!-- Кнопки -->
             <div class="col-md-2">
-                <button type="submit" class="btn btn-primary w-100">🔍 Найти</button>
+                <button type="submit" class="btn btn-primary w-100">Найти</button>
             </div>
         </form>
 
+        <!-- Сброс фильтров -->
         {% if search_query or genre_filter or availability_filter %}
         <div class="mt-3">
             <a href="{% url 'book_list' %}" class="btn btn-outline-secondary btn-sm">
-                ❌ Сбросить фильтры
+                Сбросить фильтры
             </a>
             <small class="text-muted ms-2">
                 Найдено книг: {{ books.count }}
@@ -59,6 +80,7 @@
     </div>
 </div>
 
+<!-- Список книг -->
 <div class="row">
     {% for book in books %}
     <div class="col-md-6 mb-4">
@@ -66,11 +88,12 @@
             <div class="card-body">
                 <h5 class="card-title">{{ book.title }}</h5>
                 <p class="card-text">
-                    <strong>👤 Автор:</strong> {{ book.author.full_name }}<br>
-                    <strong>📖 Жанр:</strong> {{ book.genre.name }}<br>
+                    <strong>Автор:</strong> {{ book.author.full_name }}<br>
+                    <strong>Жанр:</strong> {{ book.genre.name }}<br>
 
+                    <!-- Уровень доступа -->
                     {% if book.access_level != 'free' %}
-                    <strong>🔒 Уровень доступа:</strong>
+                    <strong>Уровень доступа:</strong>
                     <span class="badge
                         {% if book.access_level == 'student' %}bg-warning
                         {% elif book.access_level == 'premium' %}bg-info
@@ -80,11 +103,12 @@
                     </span><br>
                     {% endif %}
 
-                    <strong>📊 Статус:</strong>
+                    <!-- Статус доступности -->
+                    <strong>Статус:</strong>
                     {% if book.is_available %}
-                        <span class="text-success">✅ Доступна</span>
+                        <span class="text-success">✅ Доступна для выдачи</span>
                     {% else %}
-                        <span class="text-danger">⏳ Выдана</span>
+                        <span class="text-warning">⏳ Выдана (доступ откроется {{ book.get_next_available_date }})</span>
                     {% endif %}
                 </p>
             </div>
@@ -92,14 +116,15 @@
             <div class="card-footer">
                 {% if book.is_available %}
                 <a href="{% url 'borrow_book' book.id %}" class="btn btn-primary btn-sm">
-                    📥 Выдать книгу
+                    Выдать книгу
                 </a>
                 {% else %}
                 <span class="btn btn-secondary btn-sm disabled">
-                    🔒 Недоступна
+                    Недоступна
                 </span>
                 {% endif %}
 
+                <!-- Информация о сроке выдачи -->
                 <small class="text-muted ms-2">
                     {% if book.max_loan_days %}
                     Срок: {{ book.max_loan_days }} дн.
@@ -111,7 +136,7 @@
     {% empty %}
     <div class="col-12">
         <div class="alert alert-info text-center">
-            <h4>📚 Книги не найдены</h4>
+            <h4>Книги не найдены</h4>
             <p>
                 {% if search_query or genre_filter or availability_filter %}
                 Попробуйте изменить параметры поиска или
@@ -126,6 +151,7 @@
     {% endfor %}
 </div>
 
+<!-- Пагинация -->
 {% if books.count > 10 %}
 <nav aria-label="Page navigation" class="mt-4">
     <ul class="pagination justify-content-center">
